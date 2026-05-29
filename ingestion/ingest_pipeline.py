@@ -1,8 +1,13 @@
 import logging
 from pathlib import Path
+import sys
 
-from langchain.vectorstores import FAISS
-from langchain.schema import Document
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
 from embeddings.embedding_model import embedding_model
 from ingestion.chunking import split_documents
@@ -13,7 +18,6 @@ from ingestion.pdf_loader import load_pdf
 
 LOGGER = logging.getLogger(__name__)
 
-BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 PDF_DIR = DATA_DIR / "pdfs"
 DOC_DIR = DATA_DIR / "docs"
