@@ -5,7 +5,9 @@ from fastapi import UploadFile
 from document_manager.delete_service import delete_document_file
 from document_manager.file_registry import iter_document_paths
 from document_manager.rebuild_service import (
+    get_rebuild_status,
     get_vector_store_status,
+    queue_rebuild_vector_store,
     rebuild_vector_store,
 )
 from document_manager.upload_service import save_uploaded_file
@@ -28,6 +30,10 @@ def rebuild_index() -> dict:
     return rebuild_vector_store()
 
 
+def queue_rebuild() -> dict:
+    return queue_rebuild_vector_store()
+
+
 def list_documents() -> list[dict]:
     return [_serialize_document(file_path) for file_path in iter_document_paths()]
 
@@ -44,4 +50,5 @@ def get_stats() -> dict:
         "documents": len(documents),
         "total_size_bytes": total_size,
         "vector_store_ready": get_vector_store_status(),
+        "rebuild_status": get_rebuild_status(),
     }

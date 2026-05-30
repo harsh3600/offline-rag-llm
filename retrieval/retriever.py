@@ -3,7 +3,7 @@ from pathlib import Path
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 
-from embeddings.embedding_model import embedding_model
+from embeddings.embedding_model import get_embedding_model
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,7 +23,7 @@ def get_vector_store() -> FAISS:
 
     return FAISS.load_local(
         str(VECTOR_STORE_DIR),
-        embedding_model,
+        get_embedding_model(),
         # FAISS metadata is stored via pickle by LangChain. Only load indexes
         # generated locally by this application.
         allow_dangerous_deserialization=True,

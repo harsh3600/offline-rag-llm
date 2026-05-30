@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException,UploadFile, File
+from fastapi import BackgroundTasks, FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel, Field
 
 from rag.rag_pipeline import ask_rag
@@ -8,12 +8,14 @@ from services.grammar_service import improve_grammar
 from services.email_service import generate_email
 from services.citation_service import generate_citation
 from document_manager.document_service import (
+    queue_rebuild,
     save_document,
     rebuild_index,
     list_documents,
     delete_document,
     get_stats
 )
+from document_manager.rebuild_service import get_rebuild_status
 
 
 app = FastAPI(
@@ -175,17 +177,27 @@ def citation(request: TextRequest):
     
 @app.post("/upload")
 def upload_document(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...)
 ):
-    print(f"Received file: {file.filename}")
-    path = save_document(file)
+    try:
+        path = save_document(file)
+        rebuild_state = queue_rebuild()
+        if rebuild_state["status"] == "queued":
+            background_tasks.add_task(rebuild_index)
 
-    rebuild_index()
-
-    return {
-        "message": "Uploaded",
-        "path": path
-    }
+        return {
+            "message": "Uploaded",
+            "path": path,
+            "rebuild_status": rebuild_state,
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Upload failed: {exc}",
+        ) from exc
 
 
 @app.get("/documents")
@@ -205,9 +217,16 @@ def remove_document(
 
 
 @app.post("/rebuild")
-def rebuild():
+def rebuild(background_tasks: BackgroundTasks):
+    rebuild_state = queue_rebuild()
+    if rebuild_state["status"] == "queued":
+        background_tasks.add_task(rebuild_index)
+    return rebuild_state
 
-    return rebuild_index()
+
+@app.get("/rebuild-status")
+def rebuild_status():
+    return get_rebuild_status()
 
 
 @app.get("/stats")

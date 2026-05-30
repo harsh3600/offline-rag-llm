@@ -259,23 +259,30 @@ elif mode == "Document Manager":
         if st.button(
             "Upload"
         ):
+            try:
+                files = {
+                    "file": (
+                        uploaded_file.name,
+                        uploaded_file.getvalue()
+                    )
+                }
 
-            files = {
-                "file": (
-                    uploaded_file.name,
-                    uploaded_file.getvalue()
+                response = requests.post(
+                    f"{API_URL}/upload",
+                    files=files,
+                    timeout=30
                 )
-            }
+                response.raise_for_status()
 
-            response = requests.post(
-    f"{API_URL}/upload",
-    files=files,
-    timeout=300
-    )
-
-            print(response.text)
-
-            st.write(response.json())
+                result = response.json()
+                st.success(
+                    f"{result['message']}: {result['path']}"
+                )
+                st.info(
+                    result["rebuild_status"]["message"]
+                )
+            except Exception as exc:
+                st.error(str(exc))
 
     st.subheader(
         "Current Documents"
@@ -332,6 +339,12 @@ elif mode == "Document Manager":
             "Documents",
             stats["documents"]
         )
+        st.write(
+            f"Rebuild status: {stats['rebuild_status']['status']}"
+        )
+        st.caption(
+            stats["rebuild_status"]["message"]
+        )
 
     except Exception as exc:
 
@@ -340,11 +353,13 @@ elif mode == "Document Manager":
     if st.button(
         "Rebuild Vector Store"
     ):
-
-        requests.post(
-            f"{API_URL}/rebuild"
-        )
-
-        st.success(
-            "Vector store rebuilt"
-        )
+        try:
+            response = requests.post(
+                f"{API_URL}/rebuild",
+                timeout=30
+            )
+            response.raise_for_status()
+            result = response.json()
+            st.success(result["message"])
+        except Exception as exc:
+            st.error(str(exc))

@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
-from embeddings.embedding_model import embedding_model
+from embeddings.embedding_model import get_embedding_model
 from ingestion.chunking import split_documents
 from ingestion.doc_loader import load_docx
 from ingestion.excel_loader import load_excel
@@ -77,11 +77,13 @@ def build_vector_store() -> Path:
         raise ValueError("Chunking produced no output documents.")
 
     LOGGER.info("Created %s chunks", len(chunks))
+    print(f"Created {len(chunks)} chunks")
 
-    vector_db = FAISS.from_documents(chunks, embedding_model)
+    vector_db = FAISS.from_documents(chunks, get_embedding_model())
     vector_db.save_local(str(VECTOR_STORE_DIR))
 
     LOGGER.info("Vector store saved to %s", VECTOR_STORE_DIR)
+    print(f"Vector store saved to {VECTOR_STORE_DIR}")
     return VECTOR_STORE_DIR
 
 
