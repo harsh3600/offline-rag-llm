@@ -24,7 +24,8 @@ mode = st.sidebar.radio(
  "Grammar Checker",
  "Email Generator",
  "Citation Generator",
- "Document Manager"
+ "Document Manager",
+ "Research Notebook"
 ]
 )
 
